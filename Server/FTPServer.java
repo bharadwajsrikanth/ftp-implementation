@@ -73,22 +73,6 @@ public class FTPServer {
                 System.out.println("Authentication successful");
                 auth_message = "Welcome, " + username;
                 sendMessage(auth_message);
-                String command, operation, filename;
-                StringTokenizer st;
-                while (true) {
-                    command = (String)in.readUTF();
-                    st = new StringTokenizer(command);
-                    operation = st.nextToken();
-                    switch (operation.charAt(0)) {
-                        case 'g':
-                        case 'G':
-                            filename = st.nextToken();
-                            sendFile(filename);
-                            break;
-                        default:
-                            System.out.println("Invalid Input");
-                    }
-                }
             }
             else {
                 System.out.println("Authentication failed");
@@ -97,7 +81,31 @@ public class FTPServer {
             }
 
         }
-        catch(IOException i){
+        catch(IOException i) {
+            System.out.println(i);
+        }
+    }
+
+    private void performOperation() {
+        String command, operation, filename;
+        StringTokenizer st;
+        try {
+            while (true) {
+                command = (String) in.readUTF();
+                st = new StringTokenizer(command);
+                operation = st.nextToken();
+                switch (operation.charAt(0)) {
+                    case 'g':
+                    case 'G':
+                        filename = st.nextToken();
+                        sendFile(filename);
+                        break;
+                    default:
+                        System.out.println("Invalid Input");
+                }
+            }
+        }
+        catch(IOException i) {
             System.out.println(i);
         }
     }
@@ -122,6 +130,7 @@ public class FTPServer {
                     new BufferedInputStream(socket.getInputStream())
             );
             performAuthentication();
+            performOperation();
         }
         catch(IOException i) {
             System.out.println(i);
