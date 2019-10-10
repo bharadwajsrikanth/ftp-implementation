@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.StringTokenizer;
 
 public class FTPClient {
 
@@ -41,6 +42,29 @@ public class FTPClient {
         }
     }
 
+    private void receiveFile(String name) {
+        //System.out.println("File name: " + name);
+        try {
+            FileOutputStream fos = new FileOutputStream(name);
+            long filesize = in.readLong();
+            fos.flush();
+            byte[] bytes = new byte[8192];
+            int count;
+            while (filesize>0 && (count = in.read(bytes,0,(int)Math.min(bytes.length,filesize))) != -1) {
+                fos.write(bytes, 0, count);
+                filesize -= count;
+            }
+            fos.close();
+        }
+        catch(FileNotFoundException e) {
+            System.out.println("Error occurred while storing the file.");
+        }
+        catch(IOException e){
+            System.out.println("Exception while taking inputs/writing file");
+        }
+    }
+
+
     private void run() {
         try {
             socket = new Socket(SERVER_PROXY, SERVER_PORT);
@@ -53,6 +77,33 @@ public class FTPClient {
             in_obj = new ObjectInputStream(socket.getInputStream());
             auth_msg = (String) in_obj.readObject();
             System.out.println(auth_msg);
+
+            if (auth_msg.charAt(0) == 'W') {
+                boolean exec = true;
+                String command = "";
+                String operation = "";
+                StringTokenizer st;
+                while (exec) {
+                    System.out.print("Enter command: ");
+                    command = bufferedReader.readLine();
+                    st = new StringTokenizer(command);
+                    sendMessage(command);
+                    operation = st.nextToken();
+                    switch (operation.charAt(0)) {
+                        case 'g':
+                        case 'G':
+                            receiveFile(st.nextToken());
+                            break;
+                        case 'e':
+                        case 'E':
+                            System.out.println("Exiting program");
+                            exec = false;
+                            break;
+                        default:
+                            System.out.println("Operation not implemented");
+                    }
+                }
+            }
         }
         catch(UnknownHostException u) {
             System.out.println(u);

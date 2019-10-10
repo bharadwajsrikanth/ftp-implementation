@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.StringTokenizer;
 
 public class FTPServer {
 
@@ -38,19 +39,63 @@ public class FTPServer {
         }
     }
 
+    private void sendFile(String name) {
+        File file = new File(name);
+        long length = file.length();
+        InputStream filein;
+        byte bytearray[] = new byte[8192];
+
+        try {
+            System.out.println("Sending file " + name + " to client");
+            out.flush();
+            out.writeLong(length);
+            filein = new FileInputStream(file);
+            int count;
+            while ((count = filein.read(bytearray)) > 0) {
+                out.write(bytearray, 0, count);
+            }
+            out.flush();
+        }
+        catch(FileNotFoundException e) {
+            System.out.println("File not found on the server.");
+        }
+        catch(IOException e){
+            System.out.println("Exception while taking inputs/reading file");
+        }
+    }
+
     private void performAuthentication() {
         String username, password, auth_message;
         try {
             username = (String) in.readUTF();
             password = (String) in.readUTF();
-            if(username.equals(getUsername()) && password.equals(getPassword())){
+            if(username.equals(getUsername()) && password.equals(getPassword())) {
                 System.out.println("Authentication successful");
                 auth_message = "Welcome, " + username;
-            }else{
+                sendMessage(auth_message);
+                String command, operation, filename;
+                StringTokenizer st;
+                while (true) {
+                    command = (String)in.readUTF();
+                    st = new StringTokenizer(command);
+                    operation = st.nextToken();
+                    switch (operation.charAt(0)) {
+                        case 'g':
+                        case 'G':
+                            filename = st.nextToken();
+                            sendFile(filename);
+                            break;
+                        default:
+                            System.out.println("Invalid Input");
+                    }
+                }
+            }
+            else {
                 System.out.println("Authentication failed");
                 auth_message = "Login Failed";
+                sendMessage(auth_message);
             }
-            sendMessage(auth_message);
+
         }
         catch(IOException i){
             System.out.println(i);
