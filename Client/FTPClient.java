@@ -94,6 +94,12 @@ public class FTPClient {
                         case 'G':
                             receiveFile(st.nextToken());
                             break;
+                        case 'd':
+                        case 'D':
+                            String files = (String) in_obj.readObject();
+                            System.out.println("Files available on server: ");
+                            System.out.println(files);
+                            break;
                         case 'e':
                         case 'E':
                             System.out.println("Exiting program");
@@ -112,7 +118,7 @@ public class FTPClient {
             System.out.println(ex);
         }
         catch(IOException i) {
-            System.out.println(i);
+            i.printStackTrace();
         }
         finally {
             System.out.println("Closing connection");

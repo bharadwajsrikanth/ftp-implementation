@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 
 public class FTPServer {
 
@@ -14,6 +15,7 @@ public class FTPServer {
     private Socket socket = null;
     private DataOutputStream out;
     private DataInputStream in;
+    private ObjectOutputStream out_obj;
 
     public FTPServer() {}
 
@@ -28,11 +30,10 @@ public class FTPServer {
     void sendMessage(String msg)
     {
         try{
-            ObjectOutputStream out_obj = new ObjectOutputStream(socket.getOutputStream());;
+            //ObjectOutputStream out_obj = new ObjectOutputStream(socket.getOutputStream());
             out_obj.flush();
             out_obj.writeObject(msg);
             out_obj.flush();
-            System.out.println("Sending message to client");
         }
         catch(IOException i){
             System.out.println(i);
@@ -64,13 +65,24 @@ public class FTPServer {
         }
     }
 
+    String getFiles(File directory){
+        StringBuilder files = new StringBuilder("");
+        for(File fe: directory.listFiles()){
+            //if(!Pattern.matches("*class", fe.getName()) && !Pattern.matches("*java", fe.getName())) {
+                files.append("\t"+fe.getName()+"\n");
+                //files.append("\n");
+            //}
+        }
+        return files.toString();
+    }
+
     private void performAuthentication() {
         String username, password, auth_message;
         try {
             username = (String) in.readUTF();
             password = (String) in.readUTF();
             if(username.equals(getUsername()) && password.equals(getPassword())) {
-                System.out.println("Authentication successful");
+                System.out.println("Authentication successful, sending message to client");
                 auth_message = "Welcome, " + username;
                 sendMessage(auth_message);
             }
@@ -94,11 +106,19 @@ public class FTPServer {
                 command = (String) in.readUTF();
                 st = new StringTokenizer(command);
                 operation = st.nextToken();
+                System.out.println("Requested operation: " + operation);
                 switch (operation.charAt(0)) {
                     case 'g':
                     case 'G':
                         filename = st.nextToken();
                         sendFile(filename);
+                        break;
+                    case 'd':
+                    case 'D':
+                        File cur_directory = new File(".");
+                        String files = getFiles(cur_directory);
+                        System.out.println("Sending file names to client");
+                        sendMessage(files);
                         break;
                     default:
                         System.out.println("Invalid Input");
@@ -129,6 +149,7 @@ public class FTPServer {
             in = new DataInputStream(
                     new BufferedInputStream(socket.getInputStream())
             );
+            out_obj = new ObjectOutputStream(socket.getOutputStream());
             performAuthentication();
             performOperation();
         }
