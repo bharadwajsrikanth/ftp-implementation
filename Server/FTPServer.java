@@ -27,16 +27,37 @@ public class FTPServer {
         return this.PASSWORD;
     }
 
-    void sendMessage(String msg)
-    {
-        try{
-            //ObjectOutputStream out_obj = new ObjectOutputStream(socket.getOutputStream());
+    void sendMessage(String msg) {
+        try {
             out_obj.flush();
             out_obj.writeObject(msg);
             out_obj.flush();
         }
         catch(IOException i){
             System.out.println(i);
+        }
+    }
+
+    private void receiveFile(String name) {
+        System.out.println("Receiving File: " + name);
+        try {
+            FileOutputStream fout = new FileOutputStream(name);
+            long filesize = in.readLong();
+            System.out.println("Filesize: "+filesize);
+            fout.flush();
+            byte[] bytes = new byte[8192];
+            int count;
+            while (filesize>0 && (count = in.read(bytes,0,(int)Math.min(bytes.length,filesize))) != -1) {
+                fout.write(bytes, 0, count);
+                filesize -= count;
+            }
+            fout.close();
+        }
+        catch(FileNotFoundException e) {
+            System.out.println("Error occurred while storing the file.");
+        }
+        catch(IOException e) {
+            System.out.println("Exception while taking inputs/writing file");
         }
     }
 
@@ -65,12 +86,11 @@ public class FTPServer {
         }
     }
 
-    String getFiles(File directory){
+    String getFiles(File directory) {
         StringBuilder files = new StringBuilder("");
         for(File fe: directory.listFiles()){
             //if(!Pattern.matches("*class", fe.getName()) && !Pattern.matches("*java", fe.getName())) {
                 files.append("\t"+fe.getName()+"\n");
-                //files.append("\n");
             //}
         }
         return files.toString();
@@ -119,6 +139,10 @@ public class FTPServer {
                         String files = getFiles(cur_directory);
                         System.out.println("Sending file names to client");
                         sendMessage(files);
+                        break;
+                    case 'u':
+                    case 'U':
+                        receiveFile(st.nextToken());
                         break;
                     default:
                         System.out.println("Invalid Input");

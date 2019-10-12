@@ -64,6 +64,31 @@ public class FTPClient {
         }
     }
 
+    private void uploadFile(String name) {
+        System.out.println("Uploading file: " + name);
+        File file = new File(name);
+        long length = file.length();
+
+        byte bytes[] = new byte[8192];
+        try {
+            System.out.println("size: "+length);
+            out.flush();
+            out.writeLong(length);
+            InputStream filein = new FileInputStream(file);
+            int count;
+            while ((count = filein.read(bytes)) > 0) {
+                out.write(bytes, 0, count);
+            }
+            out.flush();
+        }
+        catch(FileNotFoundException e) {
+            System.out.println("File not found on the server.");
+        }
+        catch(IOException e) {
+            System.out.println("Exception while taking inputs/reading file");
+        }
+        System.out.println("Uploaded file: " + name);
+    }
 
     private void run() {
         try {
@@ -99,6 +124,10 @@ public class FTPClient {
                             String files = (String) in_obj.readObject();
                             System.out.println("Files available on server: ");
                             System.out.println(files);
+                            break;
+                        case 'u':
+                        case 'U':
+                            uploadFile(st.nextToken());
                             break;
                         case 'e':
                         case 'E':
