@@ -12,7 +12,6 @@ public class FTPServer {
     private int SERVER_PORT = 5000;
 
     private static ServerSocket server = null;
-    //private Socket socket = null;
     private DataOutputStream out;
     private DataInputStream in;
     private ObjectOutputStream out_obj;
@@ -30,7 +29,7 @@ public class FTPServer {
             server = new ServerSocket(5000);
             while (true) {
                 new Util(server.accept(), clientNum).start();
-                System.out.println("Client: " + clientNum + " connected!");
+                System.out.println("Client: " + clientNum + " connected");
                 clientNum++;
             }
         } catch (IOException e) {
@@ -144,21 +143,25 @@ public class FTPServer {
 
         private void performAuthentication() {
             String username, password, auth_message;
-            try {
-                username = (String) in.readUTF();
-                password = (String) in.readUTF();
-                if (username.equals(getUsername()) && password.equals(getPassword())) {
-                    System.out.println("Authentication successful, sending message to client");
-                    auth_message = "Welcome, " + username;
-                    sendMessage(auth_message);
-                } else {
-                    System.out.println("Authentication failed");
-                    auth_message = "Login Failed";
-                    sendMessage(auth_message);
-                }
+            boolean auth_success = false;
+            while(!auth_success) {
+                try {
+                    username = (String) in.readUTF();
+                    password = (String) in.readUTF();
+                    if (username.equals(getUsername()) && password.equals(getPassword())) {
+                        auth_success = true;
+                        System.out.println("Authentication successful, sending message to client");
+                        auth_message = "Welcome, " + username;
+                        sendMessage(auth_message);
+                    } else {
+                        System.out.println("Authentication failed");
+                        auth_message = "Login Failed, please try again";
+                        sendMessage(auth_message);
+                    }
 
-            } catch (IOException i) {
-                System.out.println(i);
+                } catch (IOException i) {
+                    System.out.println(i);
+                }
             }
         }
 
@@ -171,25 +174,24 @@ public class FTPServer {
                     st = new StringTokenizer(command);
                     operation = st.nextToken();
                     System.out.println("Requested operation: " + operation);
-                    switch (operation.charAt(0)) {
-                        case 'g':
-                        case 'G':
-                            filename = st.nextToken();
-                            sendFile(filename);
-                            break;
-                        case 'd':
-                        case 'D':
-                            File cur_directory = new File(".");
-                            String files = getFiles(cur_directory);
-                            System.out.println("Sending file names to client");
-                            sendMessage(files);
-                            break;
-                        case 'u':
-                        case 'U':
-                            receiveFile(st.nextToken());
-                            break;
-                        default:
-                            System.out.println("Invalid Input");
+                    if(operation.equals("get")) {
+                        filename = st.nextToken();
+                        sendFile(filename);
+                    }
+                    else if(operation.equals("dir")) {
+                        File cur_directory = new File(".");
+                        String files = getFiles(cur_directory);
+                        System.out.println("Sending file names to client");
+                        sendMessage(files);
+                    }
+                    else if(operation.equals("upload")) {
+                        receiveFile(st.nextToken());
+                    }
+                    else if(operation.equals("exit")) {
+                        System.out.println("Client exiting");
+                    }
+                    else {
+                        System.out.println("Invalid Input");
                     }
                 }
             } catch (IOException i) {

@@ -43,7 +43,6 @@ public class FTPClient {
     }
 
     private void receiveFile(String name) {
-        //System.out.println("File name: " + name);
         try {
             long filesize = in.readLong();
             if(filesize == -1) {
@@ -98,30 +97,63 @@ public class FTPClient {
     }
 
     private void run() {
+        boolean conn_established = false;
         String command = "";
         String operation = "";
         String host;
         StringTokenizer st;
         int port;
         bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+        System.out.println("\tEnter \"ftpclient <host> <port>\" to connect to the required host");
+        while(!conn_established) {
+            try {
+                command = bufferedReader.readLine();
+                st = new StringTokenizer(command);
+                operation = st.nextToken();
+                host = st.nextToken();
+                port = Integer.parseInt(st.nextToken());
+                socket = new Socket(host, port);
+                System.out.println("Connected to the server");
+                conn_established = true;
+            }
+            catch (UnknownHostException u) {
+                System.out.println("Host unknown, please enter correct host");
+            }
+            catch (ConnectException e) {
+                System.out.println("Connection refused, please try again with correct hostname and port number");
+            }
+            catch(IOException i) {
+                System.out.println(i);
+            }
+        }
+
         try {
-            System.out.println("Enter \"ftpclient <host> <port>\" to connect to the required host");
-            command = bufferedReader.readLine();
-            st = new StringTokenizer(command);
-            operation = st.nextToken();
-            host = st.nextToken();
-            port = Integer.parseInt(st.nextToken());
-            socket = new Socket(host, port);
-            System.out.println("Connected");
             out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
             out.flush();
             in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-            //bufferedReader = new BufferedReader(new InputStreamReader(System.in));
-            getAuthCredentials(bufferedReader);
             in_obj = new ObjectInputStream(socket.getInputStream());
-            auth_msg = (String) in_obj.readObject();
-            System.out.println(auth_msg);
+        }
+        catch(IOException i) {
+            i.printStackTrace();
+        }
 
+        boolean user_authenticated = false;
+        while(!user_authenticated) {
+            try {
+                getAuthCredentials(bufferedReader);
+                auth_msg = (String) in_obj.readObject();
+                System.out.println(auth_msg);
+                if (auth_msg.charAt(0) == 'W')
+                    user_authenticated = true;
+            }
+            catch (IOException i) {
+                i.printStackTrace();
+            }
+            catch (ClassNotFoundException ex) {
+                System.out.println(ex);
+            }
+        }
+        try {
             if (auth_msg.charAt(0) == 'W') {
                 boolean exec = true;
                 while (exec) {
@@ -130,39 +162,33 @@ public class FTPClient {
                     st = new StringTokenizer(command);
                     sendMessage(command);
                     operation = st.nextToken();
-                    switch (operation.charAt(0)) {
-                        case 'g':
-                        case 'G':
-                            receiveFile(st.nextToken());
-                            break;
-                        case 'd':
-                        case 'D':
-                            String files = (String) in_obj.readObject();
-                            System.out.println("Files available on server: ");
-                            System.out.println(files);
-                            break;
-                        case 'u':
-                        case 'U':
-                            uploadFile(st.nextToken());
-                            break;
-                        case 'e':
-                        case 'E':
-                            System.out.println("Exiting program");
-                            exec = false;
-                            break;
-                        default:
-                            System.out.println("Operation not implemented");
+                    if(operation.equals("get")) {
+                        receiveFile(st.nextToken());
+                    }
+                    else if(operation.equals("dir")) {
+                        String files = (String) in_obj.readObject();
+                        System.out.println("Files available on server: ");
+                        System.out.println(files);
+                    }
+                    else if(operation.equals("upload")) {
+                        uploadFile(st.nextToken());
+                    }
+                    else if(operation.equals("exit")) {
+                        System.out.println("Exiting program");
+                        exec = false;
+                    }
+                    else {
+                        System.out.println("Operation not implemented");
+                        System.out.println("Please use one of the following:");
+                        System.out.println("\tdir (list all files on server)");
+                        System.out.println("\tget <filename> (download a file from the server)");
+                        System.out.println("\tupload <filename> (upload a file to the server)");
                     }
                 }
             }
-        }
-        catch(UnknownHostException u) {
-            System.out.println("Host unknown, please enter correct host");
-        }
-        catch(ClassNotFoundException ex) {
+        } catch (ClassNotFoundException ex) {
             System.out.println(ex);
-        }
-        catch(IOException i) {
+        } catch (IOException i) {
             i.printStackTrace();
         }
         finally {
