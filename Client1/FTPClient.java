@@ -4,8 +4,8 @@ import java.util.StringTokenizer;
 
 public class FTPClient {
 
-    private int SERVER_PORT = 5000;
-    private String SERVER_PROXY = "localhost";
+//    private int SERVER_PORT = 5000;
+//    private String SERVER_PROXY = "localhost";
 
     private Socket socket = null;
     private BufferedReader bufferedReader;
@@ -50,10 +50,10 @@ public class FTPClient {
                 return;
             }
             System.out.println("Downloading file: " + name);
-            System.out.println("Size: " + filesize);
+            System.out.println("Size: " + filesize + " bytes");
             FileOutputStream fos = new FileOutputStream(name);
             fos.flush();
-            byte[] bytes = new byte[8192];
+            byte[] bytes = new byte[8192*2];
             int count;
             while (filesize>0 && (count = in.read(bytes,0,(int)Math.min(bytes.length,filesize))) != -1) {
                 fos.write(bytes, 0, count);
@@ -74,10 +74,13 @@ public class FTPClient {
         System.out.println("Uploading file: " + name);
         File file = new File(name);
         long length = file.length();
-
-        byte bytes[] = new byte[8192];
+        if(length == 0) {
+            System.out.println("File " + name + " is unavailable");
+            return;
+        }
+        byte bytes[] = new byte[8192*2];
         try {
-            System.out.println("size: "+length);
+            System.out.println("Size: " + length + " bytes");
             out.flush();
             out.writeLong(length);
             InputStream filein = new FileInputStream(file);
@@ -86,14 +89,15 @@ public class FTPClient {
                 out.write(bytes, 0, count);
             }
             out.flush();
+            System.out.println("Uploaded file: " + name);
         }
         catch(FileNotFoundException e) {
-            System.out.println("File not found on the server.");
+            System.out.println(e);
         }
         catch(IOException e) {
             System.out.println("Exception while taking inputs/reading file");
         }
-        System.out.println("Uploaded file: " + name);
+
     }
 
     private void run() {
@@ -110,6 +114,11 @@ public class FTPClient {
                 command = bufferedReader.readLine();
                 st = new StringTokenizer(command);
                 operation = st.nextToken();
+                operation = operation.toLowerCase();
+                if(!operation.equals("ftpclient")){
+                    System.out.println("Connection refused, please use \"ftpclient\"");
+                    continue;
+                }
                 host = st.nextToken();
                 port = Integer.parseInt(st.nextToken());
                 socket = new Socket(host, port);
@@ -162,6 +171,7 @@ public class FTPClient {
                     st = new StringTokenizer(command);
                     sendMessage(command);
                     operation = st.nextToken();
+                    operation = operation.toLowerCase();
                     if(operation.equals("get")) {
                         receiveFile(st.nextToken());
                     }

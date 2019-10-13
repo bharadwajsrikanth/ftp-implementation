@@ -87,7 +87,7 @@ public class FTPServer {
                 long filesize = in.readLong();
                 System.out.println("Filesize: " + filesize);
                 fout.flush();
-                byte[] bytes = new byte[8192];
+                byte[] bytes = new byte[8192*2];
                 int count;
                 while (filesize > 0 && (count = in.read(bytes, 0, (int) Math.min(bytes.length, filesize))) != -1) {
                     fout.write(bytes, 0, count);
@@ -105,7 +105,7 @@ public class FTPServer {
             File file = new File(name);
             long length = file.length();
             InputStream filein;
-            byte bytearray[] = new byte[8192];
+            byte bytearray[] = new byte[8192*2];
 
             try {
                 if(!file.exists()) {
@@ -134,9 +134,11 @@ public class FTPServer {
         String getFiles(File directory) {
             StringBuilder files = new StringBuilder("");
             for (File fe : directory.listFiles()) {
-                //if(!Pattern.matches("*class", fe.getName()) && !Pattern.matches("*java", fe.getName())) {
-                files.append("\t" + fe.getName() + "\n");
-                //}
+                String file_name = fe.getName();
+                System.out.println(file_name);
+                if(!file_name.endsWith("class") && !file_name.endsWith("java")) {
+                    files.append("\t" + file_name + "\n");
+                }
             }
             return files.toString();
         }
