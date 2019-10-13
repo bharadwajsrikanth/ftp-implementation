@@ -22,7 +22,7 @@ public class FTPServer {
     }
 
     public static void main(String args[]) {
-        System.out.println("The server is started");
+        System.out.println("The server is started, running on port 5000");
         System.out.println("Waiting for a client ...");
         clientNum = 1;
         try {
@@ -81,19 +81,23 @@ public class FTPServer {
         }
 
         private void receiveFile(String name) {
-            System.out.println("Receiving File: " + name);
+
             try {
-                FileOutputStream fout = new FileOutputStream(name);
                 long filesize = in.readLong();
-                System.out.println("Filesize: " + filesize);
-                fout.flush();
-                byte[] bytes = new byte[8192*2];
-                int count;
-                while (filesize > 0 && (count = in.read(bytes, 0, (int) Math.min(bytes.length, filesize))) != -1) {
-                    fout.write(bytes, 0, count);
-                    filesize -= count;
+                if(filesize > 0) {
+                    System.out.println("Receiving File: " + name);
+                    FileOutputStream fout = new FileOutputStream(name);
+                    //long filesize = in.readLong();
+                    System.out.println("Filesize: " + filesize);
+                    fout.flush();
+                    byte[] bytes = new byte[8192 * 2];
+                    int count;
+                    while (filesize > 0 && (count = in.read(bytes, 0, (int) Math.min(bytes.length, filesize))) != -1) {
+                        fout.write(bytes, 0, count);
+                        filesize -= count;
+                    }
+                    fout.close();
                 }
-                fout.close();
             } catch (FileNotFoundException e) {
                 System.out.println("Error occurred while storing the file.");
             } catch (IOException e) {

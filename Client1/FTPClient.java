@@ -74,13 +74,11 @@ public class FTPClient {
         System.out.println("Uploading file: " + name);
         File file = new File(name);
         long length = file.length();
-        if(length == 0) {
-            System.out.println("File " + name + " is unavailable");
-            return;
-        }
+
         byte bytes[] = new byte[8192*2];
         try {
-            System.out.println("Size: " + length + " bytes");
+            if(length != 0)
+                System.out.println("Size: " + length + " bytes");
             out.flush();
             out.writeLong(length);
             InputStream filein = new FileInputStream(file);
@@ -92,7 +90,7 @@ public class FTPClient {
             System.out.println("Uploaded file: " + name);
         }
         catch(FileNotFoundException e) {
-            System.out.println(e);
+            System.out.println("File " + name + " is unavailable");
         }
         catch(IOException e) {
             System.out.println("Exception while taking inputs/reading file");
