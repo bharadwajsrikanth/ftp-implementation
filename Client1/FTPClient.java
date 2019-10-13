@@ -45,8 +45,14 @@ public class FTPClient {
     private void receiveFile(String name) {
         //System.out.println("File name: " + name);
         try {
-            FileOutputStream fos = new FileOutputStream(name);
             long filesize = in.readLong();
+            if(filesize == -1) {
+                System.out.println("File " + name + " is unavailable on the server");
+                return;
+            }
+            System.out.println("Downloading file: " + name);
+            System.out.println("Size: " + filesize);
+            FileOutputStream fos = new FileOutputStream(name);
             fos.flush();
             byte[] bytes = new byte[8192];
             int count;
@@ -54,6 +60,7 @@ public class FTPClient {
                 fos.write(bytes, 0, count);
                 filesize -= count;
             }
+            System.out.println("Downloaded file: " + name);
             fos.close();
         }
         catch(FileNotFoundException e) {
@@ -91,13 +98,25 @@ public class FTPClient {
     }
 
     private void run() {
+        String command = "";
+        String operation = "";
+        String host;
+        StringTokenizer st;
+        int port;
+        bufferedReader = new BufferedReader(new InputStreamReader(System.in));
         try {
-            socket = new Socket(SERVER_PROXY, SERVER_PORT);
+            System.out.println("Enter \"ftpclient <host> <port>\" to connect to the required host");
+            command = bufferedReader.readLine();
+            st = new StringTokenizer(command);
+            operation = st.nextToken();
+            host = st.nextToken();
+            port = Integer.parseInt(st.nextToken());
+            socket = new Socket(host, port);
             System.out.println("Connected");
             out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
             out.flush();
             in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-            bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+            //bufferedReader = new BufferedReader(new InputStreamReader(System.in));
             getAuthCredentials(bufferedReader);
             in_obj = new ObjectInputStream(socket.getInputStream());
             auth_msg = (String) in_obj.readObject();
@@ -105,9 +124,6 @@ public class FTPClient {
 
             if (auth_msg.charAt(0) == 'W') {
                 boolean exec = true;
-                String command = "";
-                String operation = "";
-                StringTokenizer st;
                 while (exec) {
                     System.out.print("Enter command: ");
                     command = bufferedReader.readLine();
@@ -141,7 +157,7 @@ public class FTPClient {
             }
         }
         catch(UnknownHostException u) {
-            System.out.println(u);
+            System.out.println("Host unknown, please enter correct host");
         }
         catch(ClassNotFoundException ex) {
             System.out.println(ex);

@@ -109,6 +109,13 @@ public class FTPServer {
             byte bytearray[] = new byte[8192];
 
             try {
+                if(!file.exists()) {
+                    System.out.println("File not found on the server.");
+                    out.flush();
+                    out.writeLong(-1);
+                    out.flush();
+                    return;
+                }
                 System.out.println("Sending file " + name + " to client");
                 out.flush();
                 out.writeLong(length);
