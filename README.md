@@ -1,56 +1,68 @@
 # ftp-implementation
-A simple version of FTP client/server software implementation. It consists of two programs: ftpclient and ftpserver. First, the ftpserver is started on a computer. It listens on a certain TCP port. Then, the ftpclient is executed on the same or a different computer; the server’s address and port number are supplied in the command line, for example, “ftpclient sand.cise.ufl.edu 5106”. The client will prompt for username and password. After logon, the user can issue three commands at the client side: “dir” is to retrieve the list of file names available at the server, “get <filename>” is to retrieve a file from the server, and “upload <filename>” is to upload a file to the server.
+A simple version of FTP client/server software implementation. It consists of two programs: ftpclient and ftpserver. First, the ftpserver is started on a computer. It listens on a certain TCP port. Then, the ftpclient is executed on the same or a different computer; the server’s address and port number are supplied in the command line, for example, “ftpclient sand.cise.ufl.edu 5106”. The client will prompt for username and password. After logon, the user can issue three commands at the client side: “dir” is to retrieve the list of file names available at the server, “get \<filename\>” is to retrieve a file from the server, and “upload \<filename\>” is to upload a file to the server.
 
 ## Compilation
 1. Compile the server using
 
-***javac FTPServer.java***
+```bash
+javac FTPServer.java
+```
 
 2. Complie the clients using
 
-***javac FTPClient.java***
+```bash
+javac FTPClient.java
+```
 
 ## Execution
 1. Start the server using
 
-***java FTPServer***
+```bash
+java FTPServer
+```
 
 This starts the server which runs on **port 5000**.
 
 2. Start the client using
 
-***java FTPClient***
+```bash
+java FTPClient
+```
 
 ## Operations
 1. Establish the connection with server using command
 
-***ftpclient <host> <port>***
+```bash
+ftpclient <host> <port>
+```
 
 2. Login using following credentials:
 
-username: ***gator***
-password: ***password***
+```bash
+username: gator
+password: password
+```
 
-3. Run command
+3. Run the following command to retrieve the list of file names available at the server
 
-***dir***
+```bash
+dir
+```
 
-to retrieve the list of file names available at the server
+4. Run the following command to retrieve a file from the server
 
-4. Run command
+```bash
+get <filename>
+```
 
-***get <filename>***
+5. Run the following command to upload a file to the server
 
-to retrieve a file from the server
+```bash
+upload <filename>
+```
 
-5. Run command
+6. Run the following command to close client-server connection
 
-***upload <filename>***
-
-to upload a file to the server
-
-6. Run command
-
-***exit***
-
-to close client-server connection
+```bash
+exit
+```
